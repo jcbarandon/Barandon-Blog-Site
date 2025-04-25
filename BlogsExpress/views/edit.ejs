@@ -1,0 +1,23 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+
+<h2>Edit Blog</h2>
+<div class="create-blog">
+  <form action="/blogs/<%= blog._id %>/edit" method="POST" enctype="multipart/form-data">
+    <label for="title">Title:</label>
+    <input type="text" id="title" name="title" value="<%= blog.title %>" required>
+
+    <label for="snippet">Snippet:</label>
+    <input type="text" id="snippet" name="snippet" value="<%= blog.snippet %>" required>
+
+    <label for="body">Body:</label>
+    <textarea id="body" name="body" required><%= blog.body %></textarea>
+
+    <label for="image">Change Image (optional):</label>
+    <input type="file" id="image" name="image" accept="image/*">
+
+    <button type="submit">Update Blog</button>
+  </form>
+</div>
+
+<%- include('partials/footer') %>

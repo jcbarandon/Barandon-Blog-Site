@@ -1,0 +1,49 @@
+<html lang="en">
+<%- include("./partials/head.ejs") %>
+
+<body>
+  <%- include("./partials/nav.ejs") %>
+
+  <div class="details content">
+    <h2><%= blog.title %></h2>
+
+    <% if (blog.image) { %>
+        <img 
+  src="/uploads/<%= blog.image %>" 
+  alt="Blog image" 
+  class="blog-img" 
+  style="max-width: 600px; max-height: 400px; width: auto; height: auto; display: block; margin-bottom: 1rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+
+    <% } %>
+
+    <div class="content">
+      <p><%= blog.body %></p>
+    </div>
+
+    <!-- 🗑 Delete button -->
+    <a class="delete" data-doc="<%= blog._id %>">
+      <img src="/trashcan.svg" alt="delete icon">
+    </a>
+
+    <!-- ✏️ Edit button -->
+    <a href="/blogs/<%= blog._id %>/edit" class="edit-btn">Edit Blog</a>
+  </div>
+
+  <%- include("./partials/footer.ejs") %>
+
+  <script>
+    const trashcan = document.querySelector('a.delete');
+
+    trashcan.addEventListener('click', (e) => {
+      const endpoint = `/blogs/${trashcan.dataset.doc}`;
+
+      fetch(endpoint, {
+        method: 'DELETE',
+      })
+      .then(response => response.json())
+      .then(data => window.location.href = data.redirect)
+      .catch(err => console.log(err));
+    });
+  </script>
+</body>
+</html>
