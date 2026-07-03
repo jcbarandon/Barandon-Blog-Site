@@ -1,0 +1,27 @@
+<html lang="en">
+<%- include("./partials/head.ejs") %>
+
+<body>
+  <%- include("./partials/nav.ejs") %>
+
+  <div class="create-blog content">
+    <div class="page-header">
+      <span class="eyebrow">Admin</span>
+      <h2>Login</h2>
+    </div>
+
+    <form action="/login" method="POST">
+      <% if (error) { %>
+        <p class="form-error"><%= error %></p>
+      <% } %>
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required autofocus>
+
+      <button>Log in</button>
+    </form>
+  </div>
+
+  <%- include("./partials/footer.ejs") %>
+</body>
+</html>

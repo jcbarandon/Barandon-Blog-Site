@@ -15,14 +15,14 @@
       <div class="blog-grid">
         <% blogs.forEach(blog => { %>
           <a class="blog-card" href="/blogs/<%= blog._id %>">
-            <% if (blog.image && blog.image.toLowerCase().endsWith('.pdf')) { %>
+            <% if (blog.image && (blog.fileType === 'pdf' || blog.image.toLowerCase().endsWith('.pdf'))) { %>
               <% if (blog.thumbnail) { %>
-                <img class="thumb pdf-page-thumb" src="/uploads/<%= blog.thumbnail %>" alt="<%= blog.title %> (PDF preview)">
+                <img class="thumb pdf-page-thumb" src="<%= blog.thumbnail %>" alt="<%= blog.title %> (PDF preview)">
               <% } else { %>
                 <div class="thumb placeholder pdf-thumb">PDF</div>
               <% } %>
             <% } else if (blog.image) { %>
-              <img class="thumb" src="/uploads/<%= blog.image %>" alt="<%= blog.title %>">
+              <img class="thumb" src="<%= blog.image %>" alt="<%= blog.title %>">
             <% } else { %>
               <div class="thumb placeholder"><%= blog.title.slice(0, 1).toUpperCase() %></div>
             <% } %>

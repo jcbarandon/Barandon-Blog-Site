@@ -11,13 +11,13 @@
     <span class="date"><%= new Date(blog.publishDate || blog.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
 
     <% if (blog.image) { %>
-      <% if (blog.image.toLowerCase().endsWith('.pdf')) { %>
+      <% if (blog.fileType === 'pdf' || blog.image.toLowerCase().endsWith('.pdf')) { %>
         <div class="pdf-embed">
-          <iframe src="/uploads/<%= blog.image %>" title="<%= blog.title %> PDF" class="pdf-frame"></iframe>
-          <a href="/uploads/<%= blog.image %>" target="_blank" rel="noopener" class="btn btn-primary pdf-link">View / Download PDF</a>
+          <iframe src="<%= blog.image %>" title="<%= blog.title %> PDF" class="pdf-frame"></iframe>
+          <a href="<%= blog.image %>" target="_blank" rel="noopener" class="btn btn-primary pdf-link">View / Download PDF</a>
         </div>
       <% } else { %>
-        <img src="/uploads/<%= blog.image %>" alt="<%= blog.title %>" class="blog-img">
+        <img src="<%= blog.image %>" alt="<%= blog.title %>" class="blog-img">
       <% } %>
     <% } %>
 
@@ -25,32 +25,36 @@
       <p><%= blog.body %></p>
     </div>
 
-    <div class="detail-actions">
-      <!-- ✏️ Edit button -->
-      <a href="/blogs/<%= blog._id %>/edit" class="btn btn-primary edit-btn">Edit Blog</a>
+    <% if (isAuthed) { %>
+      <div class="detail-actions">
+        <!-- ✏️ Edit button -->
+        <a href="/blogs/<%= blog._id %>/edit" class="btn btn-primary edit-btn">Edit Blog</a>
 
-      <!-- 🗑 Delete button -->
-      <a class="btn-icon delete" data-doc="<%= blog._id %>" title="Delete blog">
-        <img src="/trashcan.svg" alt="delete icon">
-      </a>
-    </div>
+        <!-- 🗑 Delete button -->
+        <a class="btn-icon delete" data-doc="<%= blog._id %>" title="Delete blog">
+          <img src="/trashcan.svg" alt="delete icon">
+        </a>
+      </div>
+    <% } %>
   </div>
 
   <%- include("./partials/footer.ejs") %>
 
-  <script>
-    const trashcan = document.querySelector('a.delete');
+  <% if (isAuthed) { %>
+    <script>
+      const trashcan = document.querySelector('a.delete');
 
-    trashcan.addEventListener('click', (e) => {
-      const endpoint = `/blogs/${trashcan.dataset.doc}`;
+      trashcan.addEventListener('click', (e) => {
+        const endpoint = `/blogs/${trashcan.dataset.doc}`;
 
-      fetch(endpoint, {
-        method: 'DELETE',
-      })
-      .then(response => response.json())
-      .then(data => window.location.href = data.redirect)
-      .catch(err => console.log(err));
-    });
-  </script>
+        fetch(endpoint, {
+          method: 'DELETE',
+        })
+        .then(response => response.json())
+        .then(data => window.location.href = data.redirect)
+        .catch(err => console.log(err));
+      });
+    </script>
+  <% } %>
 </body>
 </html>

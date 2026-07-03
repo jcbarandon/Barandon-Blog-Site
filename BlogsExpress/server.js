@@ -1,9 +1,11 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
 const blogRoutes = require('./routes/blogRoutes');
-
+const authRoutes = require('./routes/authRoutes');
 
 // express app
 const app = express();
@@ -19,37 +21,34 @@ process.on('unhandledRejection', (err) => {
   console.error('❌ Unhandled rejection (server kept running):', err);
 });
 
-//connect to mongodb
-const dbURI = process.env.MONGO_URI;
+// Connect to MongoDB. Mongoose buffers queries made before the connection
+// finishes, so routes can be registered immediately below without waiting
+// on this promise — required for serverless (Vercel) where there's no
+// "startup" phase to block on. Guarded so a warm serverless container
+// doesn't try to reconnect on every invocation.
+function connectDB() {
+  if (mongoose.connection.readyState === 0) {
+    mongoose.connect(process.env.MONGO_URI)
+      .then(() => console.log('✅ Connected to MongoDB'))
+      .catch((err) => console.log('❌ DB connection failed:', err));
+  }
+}
+connectDB();
 
-mongoose.connect(dbURI)
-  .then(() => {
-    console.log('✅ Connected to MongoDB');
-    const server = app.listen(3000, () => {
-      console.log('🚀 Server is running on http://localhost:3000');
-    });
-
-    server.on('error', (err) => {
-      if (err.code === 'EADDRINUSE') {
-        console.log('❌ Port 3000 is already in use. Stop the other process and try again.');
-      } else {
-        console.log('❌ Server failed to start:', err);
-      }
-      process.exit(1);
-    });
-  })
-  .catch((err) => console.log('❌ DB connection failed:', err));
-
-
-// register view engine
+// register view engine — resolved relative to this file, not process.cwd(),
+// since on Vercel the working directory (/var/task) doesn't match where the
+// files actually get placed (/var/task/BlogsExpress/...).
+app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 // middleware & static files
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(morgan('dev'));
 app.use((req, res, next) => {
   res.locals.path = req.path;
+  res.locals.isAuthed = req.signedCookies && req.signedCookies.auth === 'true';
   next();
 });
 
@@ -62,10 +61,29 @@ app.get('/about', (req, res) => {
   res.render('about', { title: 'About' });
 });
 
-// blog routes
+app.use('/', authRoutes);
 app.use('/blogs', blogRoutes);
 
 // 404 page
 app.use((req, res) => {
   res.status(404).render('404', { title: '404' });
 });
+
+// Only start a listening server when run directly (local dev). On Vercel,
+// api/index.js imports `app` as a serverless request handler instead.
+if (require.main === module) {
+  const server = app.listen(3000, () => {
+    console.log('🚀 Server is running on http://localhost:3000');
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log('❌ Port 3000 is already in use. Stop the other process and try again.');
+    } else {
+      console.log('❌ Server failed to start:', err);
+    }
+    process.exit(1);
+  });
+}
+
+module.exports = app;

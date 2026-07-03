@@ -15,7 +15,15 @@ const blogSchema = new Schema({
     required: true
   },
   image: {
-    type: String, // filename only, not the full path
+    type: String, // Cloudinary URL
+    required: false
+  },
+  // 'pdf' or 'image'. Cloudinary's raw-resource URLs (used for PDFs) don't
+  // reliably carry a .pdf extension, so file type can't be inferred from
+  // the image URL string alone — it's recorded explicitly at upload time.
+  fileType: {
+    type: String,
+    enum: ['image', 'pdf'],
     required: false
   },
   thumbnail: {

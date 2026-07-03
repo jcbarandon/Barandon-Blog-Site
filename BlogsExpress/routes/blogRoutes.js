@@ -1,22 +1,16 @@
 const express = require('express');
 const blogController = require('../controllers/blogController');
 const multer = require('multer');
-const path = require('path');
+const requireAuth = require('../middleware/requireAuth');
 const router = express.Router();
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'public/uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // e.g., 1714071978293.jpg
-  }
-});
+// Files are kept in memory (not written to local disk) since the controller
+// uploads them straight to Cloudinary — required for Vercel, whose
+// filesystem is read-only/ephemeral outside of /tmp.
 const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
 
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
     if (allowedMimeTypes.includes(file.mimetype)) {
@@ -40,13 +34,20 @@ const uploadImage = (req, res, next) => {
   });
 };
 
-// Routes
-router.get('/create', blogController.blog_create_get);
+// Note: '/create' and '/:id/edit' must stay registered before the generic
+// '/:id' route below, or Express would match them as an :id value instead.
+
+// Public (read-only) routes
 router.get('/', blogController.blog_index);
-router.post('/', uploadImage, blogController.blog_create_post);
+
+// Admin-only routes
+router.get('/create', requireAuth, blogController.blog_create_get);
+router.post('/', requireAuth, uploadImage, blogController.blog_create_post);
+router.get('/:id/edit', requireAuth, blogController.blog_edit_get);
+router.post('/:id/edit', requireAuth, uploadImage, blogController.blog_edit_post);
+router.delete('/:id', requireAuth, blogController.blog_delete);
+
+// Public (read-only) route — must come after '/create' and '/:id/edit'
 router.get('/:id', blogController.blog_details);
-router.delete('/:id', blogController.blog_delete);
-router.get('/:id/edit', blogController.blog_edit_get);
-router.post('/:id/edit', uploadImage, blogController.blog_edit_post);
 
 module.exports = router;

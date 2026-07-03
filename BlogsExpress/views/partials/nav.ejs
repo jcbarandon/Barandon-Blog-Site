@@ -6,6 +6,11 @@
   <ul>
     <li><a href="/blogs" class="<%= path && path.startsWith('/blogs') && path !== '/blogs/create' ? 'active' : '' %>">Blogs</a></li>
     <li><a href="/about" class="<%= path === '/about' ? 'active' : '' %>">About</a></li>
-    <li><a href="/blogs/create">New Blog</a></li>
+    <% if (typeof isAuthed !== 'undefined' && isAuthed) { %>
+      <li><a href="/logout" class="logout-link">Log out</a></li>
+      <li><a href="/blogs/create" class="nav-cta">New Blog</a></li>
+    <% } else { %>
+      <li><a href="/login" class="nav-cta">Admin login</a></li>
+    <% } %>
   </ul>
 </nav>

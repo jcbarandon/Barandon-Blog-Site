@@ -1,20 +1,37 @@
-const path = require('path');
 const Blog = require('../models/blog');
 const generatePdfThumbnail = require('../utils/pdfThumbnail');
+const { uploadBuffer } = require('../utils/cloudinary');
 
-const uploadsDir = path.join(__dirname, '../public/uploads');
+// Uploads the submitted file (image or PDF) to Cloudinary and, for PDFs,
+// also generates and uploads a first-page preview image. Returns
+// { image, fileType, thumbnail }, all null if there's no file. A failed
+// thumbnail render doesn't block the upload — it just falls back to no
+// thumbnail (see views, which show a placeholder badge in that case).
+const uploadBlogFile = async (file) => {
+  if (!file) return { image: null, fileType: null, thumbnail: null };
 
-// Renders a PNG preview of a PDF's first page. Returns null (and logs)
-// if generation fails, so a bad/corrupt PDF doesn't block the blog save.
-const maybeGeneratePdfThumbnail = async (file) => {
-  if (!file || file.mimetype !== 'application/pdf') return null;
+  const isPdf = file.mimetype === 'application/pdf';
 
-  try {
-    return await generatePdfThumbnail(path.join(uploadsDir, file.filename), uploadsDir);
-  } catch (err) {
-    console.log('PDF thumbnail generation failed:', err);
-    return null;
+  const mainUpload = await uploadBuffer(file.buffer, {
+    resource_type: isPdf ? 'raw' : 'image',
+    folder: 'barandon-blog'
+  });
+
+  let thumbnail = null;
+  if (isPdf) {
+    try {
+      const thumbBuffer = await generatePdfThumbnail(file.buffer);
+      const thumbUpload = await uploadBuffer(thumbBuffer, {
+        resource_type: 'image',
+        folder: 'barandon-blog'
+      });
+      thumbnail = thumbUpload.secure_url;
+    } catch (err) {
+      console.log('PDF thumbnail generation failed:', err);
+    }
   }
+
+  return { image: mainUpload.secure_url, fileType: isPdf ? 'pdf' : 'image', thumbnail };
 };
 
 // Show all blogs
@@ -46,13 +63,14 @@ const blog_create_get = (req, res) => {
 
 // Create blog (with optional image or PDF)
 const blog_create_post = async (req, res) => {
-  const thumbnail = await maybeGeneratePdfThumbnail(req.file);
+  const { image, fileType, thumbnail } = await uploadBlogFile(req.file);
 
   const blog = new Blog({
     title: req.body.title,
     snippet: req.body.snippet,
     body: req.body.body,
-    image: req.file ? req.file.filename : null,
+    image,
+    fileType,
     thumbnail,
     publishDate: req.body.date ? new Date(req.body.date) : Date.now()
   });
@@ -98,8 +116,10 @@ const blog_edit_post = async (req, res) => {
   }
 
   if (req.file) {
-    updatedBlog.image = req.file.filename;
-    updatedBlog.thumbnail = await maybeGeneratePdfThumbnail(req.file);
+    const { image, fileType, thumbnail } = await uploadBlogFile(req.file);
+    updatedBlog.image = image;
+    updatedBlog.fileType = fileType;
+    updatedBlog.thumbnail = thumbnail;
   }
 
   Blog.findByIdAndUpdate(id, updatedBlog)

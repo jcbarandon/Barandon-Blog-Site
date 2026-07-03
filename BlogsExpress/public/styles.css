@@ -130,7 +130,7 @@ nav ul a.active {
   font-weight: 600;
 }
 
-nav ul li:last-child a {
+nav ul a.nav-cta {
   background: var(--color-primary);
   color: #fff;
   padding: 8px 16px;
@@ -139,14 +139,19 @@ nav ul li:last-child a {
   transition: background 0.2s ease, transform 0.2s ease;
 }
 
-nav ul li:last-child a::after {
+nav ul a.nav-cta::after {
   display: none;
 }
 
-nav ul li:last-child a:hover {
+nav ul a.nav-cta:hover {
   background: var(--color-primary-dark);
   color: #fff;
   transform: translateY(-1px);
+}
+
+nav ul a.logout-link {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
 }
 
 /* ==== FOOTER ==== */
@@ -462,6 +467,16 @@ a.delete:hover {
 
 .create-blog label:first-of-type {
   margin-top: 0;
+}
+
+.form-error {
+  background: #fdecec;
+  color: var(--color-primary-dark);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .create-blog input,
