@@ -1,38 +1,4 @@
 const Blog = require('../models/blog');
-const generatePdfThumbnail = require('../utils/pdfThumbnail');
-const { uploadBuffer } = require('../utils/cloudinary');
-
-// Uploads the submitted file (image or PDF) to Cloudinary and, for PDFs,
-// also generates and uploads a first-page preview image. Returns
-// { image, fileType, thumbnail }, all null if there's no file. A failed
-// thumbnail render doesn't block the upload — it just falls back to no
-// thumbnail (see views, which show a placeholder badge in that case).
-const uploadBlogFile = async (file) => {
-  if (!file) return { image: null, fileType: null, thumbnail: null };
-
-  const isPdf = file.mimetype === 'application/pdf';
-
-  const mainUpload = await uploadBuffer(file.buffer, {
-    resource_type: isPdf ? 'raw' : 'image',
-    folder: 'barandon-blog'
-  });
-
-  let thumbnail = null;
-  if (isPdf) {
-    try {
-      const thumbBuffer = await generatePdfThumbnail(file.buffer);
-      const thumbUpload = await uploadBuffer(thumbBuffer, {
-        resource_type: 'image',
-        folder: 'barandon-blog'
-      });
-      thumbnail = thumbUpload.secure_url;
-    } catch (err) {
-      console.log('PDF thumbnail generation failed:', err);
-    }
-  }
-
-  return { image: mainUpload.secure_url, fileType: isPdf ? 'pdf' : 'image', thumbnail };
-};
 
 // Show all blogs
 const blog_index = (req, res) => {
@@ -61,17 +27,16 @@ const blog_create_get = (req, res) => {
   res.render('create', { title: 'Create a new blog' });
 };
 
-// Create blog (with optional image or PDF)
-const blog_create_post = async (req, res) => {
-  const { image, fileType, thumbnail } = await uploadBlogFile(req.file);
-
+// Create blog (image/PDF, if any, was already uploaded client-side straight
+// to Cloudinary — see public/upload.js — so req.body.image is a URL, not a file)
+const blog_create_post = (req, res) => {
   const blog = new Blog({
     title: req.body.title,
     snippet: req.body.snippet,
     body: req.body.body,
-    image,
-    fileType,
-    thumbnail,
+    image: req.body.image || null,
+    fileType: req.body.fileType || null,
+    thumbnail: req.body.thumbnail || null,
     publishDate: req.body.date ? new Date(req.body.date) : Date.now()
   });
 
@@ -101,8 +66,8 @@ const blog_edit_get = (req, res) => {
     });
 };
 
-// Update blog (optionally replace image or PDF)
-const blog_edit_post = async (req, res) => {
+// Update blog (optionally replace image or PDF, uploaded client-side as above)
+const blog_edit_post = (req, res) => {
   const id = req.params.id;
 
   const updatedBlog = {
@@ -115,11 +80,10 @@ const blog_edit_post = async (req, res) => {
     updatedBlog.publishDate = new Date(req.body.date);
   }
 
-  if (req.file) {
-    const { image, fileType, thumbnail } = await uploadBlogFile(req.file);
-    updatedBlog.image = image;
-    updatedBlog.fileType = fileType;
-    updatedBlog.thumbnail = thumbnail;
+  if (req.body.image) {
+    updatedBlog.image = req.body.image;
+    updatedBlog.fileType = req.body.fileType || null;
+    updatedBlog.thumbnail = req.body.thumbnail || null;
   }
 
   Blog.findByIdAndUpdate(id, updatedBlog)

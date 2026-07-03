@@ -49,6 +49,11 @@ app.use(morgan('dev'));
 app.use((req, res, next) => {
   res.locals.path = req.path;
   res.locals.isAuthed = req.signedCookies && req.signedCookies.auth === 'true';
+  // Cloud name is not secret — it's already public in every Cloudinary
+  // asset URL. The upload preset is unsigned by design (see uploadBlogFile
+  // in public/upload.js), scoped to specific formats/folder server-side.
+  res.locals.cloudinaryCloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  res.locals.cloudinaryUploadPreset = 'barandon_blog_unsigned';
   next();
 });
 

@@ -5,7 +5,7 @@
       "src": "api/index.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["views/**", "public/**", "utils/pdfThumbnailWorker.js"]
+        "includeFiles": ["views/**", "public/**"]
       }
     }
   ],
