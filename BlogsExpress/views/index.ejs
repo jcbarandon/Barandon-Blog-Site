@@ -5,19 +5,43 @@
   <%- include("./partials/nav.ejs") %>
 
   <div class="blogs content">
-    <h2>All Blogs</h2>
+    <div class="page-header">
+      <span class="eyebrow">Latest posts</span>
+      <h2>All Blogs</h2>
+      <p class="lede">Thoughts, stories, and updates from the Barandon Blog Site.</p>
+    </div>
 
     <% if (blogs.length > 0) { %>
-      <% blogs.forEach(blog => { %>
-        <a class="single" href="/blogs/<%= blog._id %>">
-          <h3 class="title"><%= blog.title %></h3>
-          <p class="snippet"><%= blog.snippet %></p>
-        </a>
-      <% }) %>
+      <div class="blog-grid">
+        <% blogs.forEach(blog => { %>
+          <a class="blog-card" href="/blogs/<%= blog._id %>">
+            <% if (blog.image && blog.image.toLowerCase().endsWith('.pdf')) { %>
+              <% if (blog.thumbnail) { %>
+                <img class="thumb pdf-page-thumb" src="/uploads/<%= blog.thumbnail %>" alt="<%= blog.title %> (PDF preview)">
+              <% } else { %>
+                <div class="thumb placeholder pdf-thumb">PDF</div>
+              <% } %>
+            <% } else if (blog.image) { %>
+              <img class="thumb" src="/uploads/<%= blog.image %>" alt="<%= blog.title %>">
+            <% } else { %>
+              <div class="thumb placeholder"><%= blog.title.slice(0, 1).toUpperCase() %></div>
+            <% } %>
+            <div class="card-body">
+              <span class="date"><%= new Date(blog.publishDate || blog.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+              <h3 class="title"><%= blog.title %></h3>
+              <p class="snippet"><%= blog.snippet %></p>
+              <span class="read-more">Read more &rarr;</span>
+            </div>
+          </a>
+        <% }) %>
+      </div>
     <% } else { %>
-      <p>There are no blogs to display...</p>
+      <div class="empty-state">
+        <div class="icon">📝</div>
+        <p>There are no blogs to display yet.</p>
+      </div>
     <% } %>
-    
+
   </div>
 
   <%- include("./partials/footer.ejs") %>

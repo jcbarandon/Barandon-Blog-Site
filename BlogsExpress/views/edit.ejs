@@ -1,23 +1,35 @@
+<html lang="en">
 <%- include('partials/head') %>
-<%- include('partials/nav') %>
 
-<h2>Edit Blog</h2>
-<div class="create-blog">
-  <form action="/blogs/<%= blog._id %>/edit" method="POST" enctype="multipart/form-data">
-    <label for="title">Title:</label>
-    <input type="text" id="title" name="title" value="<%= blog.title %>" required>
+<body>
+  <%- include('partials/nav') %>
 
-    <label for="snippet">Snippet:</label>
-    <input type="text" id="snippet" name="snippet" value="<%= blog.snippet %>" required>
+  <div class="create-blog content">
+    <div class="page-header">
+      <span class="eyebrow">Editing</span>
+      <h2>Edit Blog</h2>
+    </div>
 
-    <label for="body">Body:</label>
-    <textarea id="body" name="body" required><%= blog.body %></textarea>
+    <form action="/blogs/<%= blog._id %>/edit" method="POST" enctype="multipart/form-data">
+      <label for="title">Title:</label>
+      <input type="text" id="title" name="title" value="<%= blog.title %>" required>
 
-    <label for="image">Change Image (optional):</label>
-    <input type="file" id="image" name="image" accept="image/*">
+      <label for="snippet">Snippet:</label>
+      <input type="text" id="snippet" name="snippet" value="<%= blog.snippet %>" required>
 
-    <button type="submit">Update Blog</button>
-  </form>
-</div>
+      <label for="body">Body:</label>
+      <textarea id="body" name="body" required><%= blog.body %></textarea>
 
-<%- include('partials/footer') %>
+      <label for="date">Publish date:</label>
+      <input type="date" id="date" name="date" value="<%= new Date(blog.publishDate || blog.createdAt).toISOString().slice(0, 10) %>">
+
+      <label for="image">Change Image or PDF (optional):</label>
+      <input type="file" id="image" name="image" accept="image/*,application/pdf">
+
+      <button type="submit">Update Blog</button>
+    </form>
+  </div>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

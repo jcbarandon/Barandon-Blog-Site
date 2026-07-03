@@ -17,6 +17,17 @@ const blogSchema = new Schema({
   image: {
     type: String, // filename only, not the full path
     required: false
+  },
+  thumbnail: {
+    type: String, // generated first-page preview image for PDF uploads
+    required: false
+  },
+  // User-editable "published on" date shown throughout the site. Kept
+  // separate from Mongoose's own createdAt, which it protects from being
+  // changed after a document is first created.
+  publishDate: {
+    type: Date,
+    default: Date.now
   }
 }, { timestamps: true });
 
