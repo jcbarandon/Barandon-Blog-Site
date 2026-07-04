@@ -77,17 +77,10 @@ nav {
   border-bottom: 2px solid var(--color-border);
 }
 
-.site-title h1 {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--color-text);
-  letter-spacing: -0.01em;
-}
-
-.site-title p {
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
-  margin-top: 2px;
+.site-logo {
+  height: 56px;
+  width: auto;
+  display: block;
 }
 
 nav ul {
