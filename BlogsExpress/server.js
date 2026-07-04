@@ -21,19 +21,32 @@ process.on('unhandledRejection', (err) => {
   console.error('❌ Unhandled rejection (server kept running):', err);
 });
 
-// Connect to MongoDB. Mongoose buffers queries made before the connection
-// finishes, so routes can be registered immediately below without waiting
-// on this promise — required for serverless (Vercel) where there's no
-// "startup" phase to block on. Guarded so a warm serverless container
-// doesn't try to reconnect on every invocation.
+// Connect to MongoDB, caching the connection promise so a warm serverless
+// container reuses it instead of reconnecting on every invocation. Every
+// request below awaits this before touching the database — without that,
+// a request arriving during a cold start would fire a query before the
+// connection exists, and Mongoose would just buffer it indefinitely with
+// no timeout, hanging the request forever instead of erroring. Explicit
+// timeouts here mean a genuinely broken connection fails in ~8s with a
+// clear error instead of hanging until Vercel kills the function.
+let dbConnectionPromise = null;
+
 function connectDB() {
-  if (mongoose.connection.readyState === 0) {
-    mongoose.connect(process.env.MONGO_URI)
-      .then(() => console.log('✅ Connected to MongoDB'))
-      .catch((err) => console.log('❌ DB connection failed:', err));
+  if (!dbConnectionPromise) {
+    dbConnectionPromise = mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 8000,
+      socketTimeoutMS: 20000
+    }).then((m) => {
+      console.log('✅ Connected to MongoDB');
+      return m;
+    }).catch((err) => {
+      console.error('❌ DB connection failed:', err);
+      dbConnectionPromise = null; // let the next request retry instead of staying stuck
+      throw err;
+    });
   }
+  return dbConnectionPromise;
 }
-connectDB();
 
 // register view engine — resolved relative to this file, not process.cwd(),
 // since on Vercel the working directory (/var/task) doesn't match where the
@@ -46,6 +59,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(morgan('dev'));
+
+// Wait for a real DB connection before handling any request (see
+// connectDB's comment above for why this can't be skipped).
+app.use((req, res, next) => {
+  connectDB()
+    .then(() => next())
+    .catch(() => res.status(503).send('Database is temporarily unavailable. Please try again in a moment.'));
+});
 app.use((req, res, next) => {
   res.locals.path = req.path;
   res.locals.isAuthed = req.signedCookies && req.signedCookies.auth === 'true';
