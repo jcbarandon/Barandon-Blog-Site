@@ -1,34 +1,78 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* ==== DESIGN TOKENS ==== */
+/* ==== DESIGN TOKENS ====
+   Palette derived from the site logo (deep navy + warm terracotta + slate
+   teal) so the UI matches the brand instead of using arbitrary colors.
+   Two ways to land in dark mode: the OS preference (prefers-color-scheme)
+   or an explicit user choice via the nav toggle, stored as [data-theme] on
+   <html> — the explicit attribute always wins over the OS preference. */
 :root {
-  --color-bg: #f7f7f5;
+  --color-bg: #f8f6f3;
   --color-surface: #ffffff;
-  --color-text: #17181c;
-  --color-text-muted: #6b6f76;
-  --color-border: #e8e8e6;
-  --color-primary: #e63946;
-  --color-primary-dark: #c91833;
-  --color-accent: #2a9d8f;
-  --shadow-sm: 0 2px 8px rgba(20, 20, 20, 0.06);
-  --shadow-md: 0 10px 24px rgba(20, 20, 20, 0.08);
-  --shadow-lg: 0 16px 40px rgba(20, 20, 20, 0.12);
+  --color-text: #1c2029;
+  --color-text-muted: #6b7280;
+  --color-border: #e8e4dd;
+  --color-primary: #b8552d;
+  --color-primary-dark: #96431f;
+  --color-on-primary: #ffffff;
+  --color-accent: #3d6470;
+  --shadow-sm: 0 2px 8px rgba(30, 24, 18, 0.06);
+  --shadow-md: 0 10px 24px rgba(30, 24, 18, 0.08);
+  --shadow-lg: 0 16px 40px rgba(30, 24, 18, 0.12);
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #121214;
-    --color-surface: #1b1c1f;
-    --color-text: #f1f1f2;
-    --color-text-muted: #9a9ca3;
-    --color-border: #2c2d31;
+  :root:not([data-theme="light"]) {
+    --color-bg: #0f1a2b;
+    --color-surface: #17263b;
+    --color-text: #eef1f5;
+    --color-text-muted: #93a0b0;
+    --color-border: #263c56;
+    --color-primary: #e08a52;
+    --color-primary-dark: #ec9c68;
+    --color-on-primary: #12213a;
+    --color-accent: #7fa8b3;
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
     --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
   }
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #0f1a2b;
+  --color-surface: #17263b;
+  --color-text: #eef1f5;
+  --color-text-muted: #93a0b0;
+  --color-border: #263c56;
+  --color-primary: #e08a52;
+  --color-primary-dark: #ec9c68;
+  --color-on-primary: #12213a;
+  --color-accent: #7fa8b3;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --color-bg: #f8f6f3;
+  --color-surface: #ffffff;
+  --color-text: #1c2029;
+  --color-text-muted: #6b7280;
+  --color-border: #e8e4dd;
+  --color-primary: #b8552d;
+  --color-primary-dark: #96431f;
+  --color-on-primary: #ffffff;
+  --color-accent: #3d6470;
+  --shadow-sm: 0 2px 8px rgba(30, 24, 18, 0.06);
+  --shadow-md: 0 10px 24px rgba(30, 24, 18, 0.08);
+  --shadow-lg: 0 16px 40px rgba(30, 24, 18, 0.12);
+  color-scheme: light;
 }
 
 /* ==== RESET ==== */
@@ -77,10 +121,23 @@ nav {
   border-bottom: 2px solid var(--color-border);
 }
 
+.site-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .site-logo {
-  height: 56px;
+  height: 48px;
   width: auto;
   display: block;
+}
+
+.site-title h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
 }
 
 nav ul {
@@ -125,7 +182,7 @@ nav ul a.active {
 
 nav ul a.nav-cta {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   padding: 8px 16px;
   border-radius: 999px;
   font-weight: 600;
@@ -138,7 +195,7 @@ nav ul a.nav-cta::after {
 
 nav ul a.nav-cta:hover {
   background: var(--color-primary-dark);
-  color: #fff;
+  color: var(--color-on-primary);
   transform: translateY(-1px);
 }
 
@@ -146,6 +203,49 @@ nav ul a.logout-link {
   color: var(--color-text-muted);
   font-size: 0.85rem;
 }
+
+/* ==== THEME TOGGLE ====
+   Shows the moon (switch-to-dark) icon by default/in light mode, and the
+   sun (switch-to-light) icon once dark mode is active — whether that's from
+   the OS preference or an explicit choice stored via [data-theme]. */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.theme-toggle:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.theme-toggle svg {
+  width: 19px;
+  height: 19px;
+}
+
+.theme-toggle .icon-sun { display: none; }
+.theme-toggle .icon-moon { display: block; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: block; }
+  :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+}
+
+:root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+:root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+:root[data-theme="light"] .theme-toggle .icon-sun { display: none; }
+:root[data-theme="light"] .theme-toggle .icon-moon { display: block; }
 
 /* ==== FOOTER ==== */
 footer {
@@ -235,7 +335,7 @@ h3 {
 }
 
 .blog-card .thumb.pdf-thumb {
-  background: linear-gradient(135deg, #4a4a52, #1f1f24);
+  background: linear-gradient(135deg, #2a3d55, #0f1a2b);
   font-size: 1.1rem;
   letter-spacing: 0.08em;
 }
@@ -399,7 +499,7 @@ h3 {
 .create-blog button,
 form button {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .btn-primary:hover,
@@ -421,18 +521,15 @@ a.delete {
   border-radius: var(--radius-sm);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-}
-
-a.delete img {
-  width: 18px;
-  height: 18px;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 a.delete:hover {
-  background: #fdecec;
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
   border-color: var(--color-primary);
+  color: var(--color-primary);
   transform: translateY(-1px);
 }
 
@@ -463,7 +560,7 @@ a.delete:hover {
 }
 
 .form-error {
-  background: #fdecec;
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
   color: var(--color-primary-dark);
   border: 1px solid var(--color-primary);
   border-radius: var(--radius-sm);
@@ -490,7 +587,7 @@ a.delete:hover {
 .create-blog textarea:focus {
   border-color: var(--color-primary);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.15);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 22%, transparent);
 }
 
 .create-blog input[type="file"] {
